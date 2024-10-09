@@ -75,7 +75,7 @@ def _build_egg(egg, archive_filename, to_dir):
     # returning the result
     log.warn(egg)
     if not os.path.exists(egg):
-        raise IOError('Could not build the egg.')
+        raise OSError('Could not build the egg.')
 
 
 class ContextualZipFile(zipfile.ZipFile):
@@ -92,7 +92,7 @@ class ContextualZipFile(zipfile.ZipFile):
         """Construct a ZipFile or ContextualZipFile as appropriate."""
         if hasattr(zipfile.ZipFile, '__exit__'):
             return zipfile.ZipFile(*args, **kwargs)
-        return super(ContextualZipFile, cls).__new__(cls)
+        return super().__new__(cls)
 
 
 @contextlib.contextmanager
@@ -131,8 +131,8 @@ def archive_context(filename):
 
 def _do_download(version, download_base, to_dir, download_delay):
     """Download Setuptools."""
-    py_desig = 'py{sys.version_info[0]}.{sys.version_info[1]}'.format(sys=sys)
-    tp = 'setuptools-{version}-{py_desig}.egg'
+    py_desig = f'py{sys.version_info[0]}.{sys.version_info[1]}'
+    tp = f'setuptools-{version}-{py_desig}.egg'
     egg = os.path.join(to_dir, tp.format(**locals()))
     if not os.path.exists(egg):
         archive = download_setuptools(version, download_base,
@@ -193,7 +193,7 @@ def _conflict_bail(VC_err, version):
     Setuptools was imported prior to invocation, so it is
     unsafe to unload it. Bail out.
     """
-    conflict_tmpl = textwrap.dedent("""
+    conflict_tmpl = textwrap.dedent(f"""
         The required version of setuptools (>={version}) is not available,
         and can't be installed while this script is running. Please
         install a more recent version first, using
@@ -245,8 +245,7 @@ def download_file_powershell(url, target):
     ps_cmd = (
         "[System.Net.WebRequest]::DefaultWebProxy.Credentials = "
         "[System.Net.CredentialCache]::DefaultCredentials; "
-        '(new-object System.Net.WebClient).DownloadFile("%(url)s", "%(target)s")'
-        % locals()
+        '(new-object System.Net.WebClient).DownloadFile("{url}", "{target}")'.format(**locals())
     )
     cmd = [
         'powershell',
@@ -346,7 +345,7 @@ def download_setuptools(
     """
     # making sure we use the absolute path
     to_dir = os.path.abspath(to_dir)
-    zip_name = "setuptools-%s.zip" % version
+    zip_name = f"setuptools-{version}.zip"
     url = download_base + zip_name
     saveto = os.path.join(to_dir, zip_name)
     if not os.path.exists(saveto):  # Avoid repeated downloads
@@ -386,11 +385,10 @@ def _parse_args():
     )
     parser.add_option(
         '--to-dir',
-        help="Directory to save (and re-use) package",
+        help="Directory to save (and reuse) package",
         default=DEFAULT_SAVE_DIR,
     )
-    options, args = parser.parse_args()
-    # positional arguments are ignored
+    options, _ = parser.parse_args()
     return options
 
 
